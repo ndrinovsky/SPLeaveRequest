@@ -89,7 +89,7 @@ export default class spservices {
       const endDate = new Date(moment(newEvent.end).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
 
       results = await web.lists.getById(listId).items.add({
-        Title: newEvent.Category,
+        Title:  newEvent.ownerName + " - " + newEvent.Category,
         Description: newEvent.Description,
         ParticipantsPickerId: newEvent.backup,
         EventDate: startDate,

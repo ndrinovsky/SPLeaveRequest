@@ -81,7 +81,7 @@ define([], function () {
     EventTitleErrorMessage: "Event Title is required.",
     EventTitleLabel: "Event title",
     EventPanelTitle: "Edit/Add Event",
-    "PropertyPaneDescription": "Calendar",
+    "PropertyPaneDescription": "Leave Calendar",
     "BasicGroupName": "Properties",
     SiteUrlFieldLabel: 'Site Url',
     ListFieldLabel: 'Calendar List name',
