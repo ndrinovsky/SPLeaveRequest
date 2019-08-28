@@ -72,7 +72,10 @@ export default class CalendarWebPart extends BaseClientSideWebPart<ICalendarWebP
   public  async onInit(): Promise<void> {
 
     this.spService = new spservices(this.context);
-    this.properties.siteUrl = this.context.pageContext.site.absoluteUrl;
+
+    if (!this.properties.siteUrl) {
+      this.properties.siteUrl = this.context.pageContext.web.absoluteUrl;
+     }
     if (!this.properties.eventStartDate){
       this.properties.eventStartDate = { value: moment().subtract(2,'years').startOf('month').toDate(), displayValue: moment().format('ddd MMM MM YYYY')};
     }

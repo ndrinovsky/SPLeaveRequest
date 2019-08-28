@@ -87,9 +87,10 @@ export default class spservices {
       //"Backup"
       const startDate = new Date(moment(newEvent.start).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
       const endDate = new Date(moment(newEvent.end).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
-
+      
+      
       results = await web.lists.getById(listId).items.add({
-        Title:  newEvent.ownerName + " - " + newEvent.Category,
+        Title:  this.context.pageContext.user.displayName + " - " + newEvent.Category,
         Description: newEvent.Description,
         ParticipantsPickerId: newEvent.backup,
         EventDate: startDate,
@@ -125,7 +126,7 @@ export default class spservices {
 
       //"Title","fRecurrence", "fAllDayEvent","EventDate", "EndDate", "Description","ID", "Location","ParticipantsPickerId"
       results = await web.lists.getById(listId).items.getById(updateEvent.id).update({
-          Title: updateEvent.Category + " " + updateEvent.ownerName,
+          Title: this.context.pageContext.user.displayName + " - " + updateEvent.Category,
           Description: updateEvent.Description,
           ParticipantsPickerId: updateEvent.backup,
           EventDate: startDate,
