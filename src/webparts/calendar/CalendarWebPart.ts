@@ -259,7 +259,7 @@ export default class CalendarWebPart extends BaseClientSideWebPart<ICalendarWebP
                 PropertyPaneTextField('siteUrl', {
                   label: strings.SiteUrlFieldLabel,
                   onGetErrorMessage: this.onSiteUrlGetErrorMessage.bind(this),
-                  value: this.context.pageContext.site.absoluteUrl,
+                  value:  this.properties.siteUrl,
                   deferredValidationTime: 1200,
                 }),
                 PropertyPaneDropdown('list', {

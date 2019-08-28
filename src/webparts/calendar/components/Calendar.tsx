@@ -8,7 +8,6 @@ import * as moment from 'moment';
 import * as moment_timezone from 'moment-timezone';
 import * as strings from 'CalendarWebPartStrings';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-require('./calendar.css');
 import {
 
   IPersonaSharedProps,

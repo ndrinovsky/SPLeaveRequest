@@ -358,7 +358,7 @@ export default class spservices {
       }
 
       const web = new Web(siteUrl);
-      const results = await web.lists.getByTitle("RequestList").renderListDataAsStream(
+      const results = await web.lists.getById(listId).renderListDataAsStream(
         {
           DatesInUtc: true,
           ViewXml: `<View><ViewFields><FieldRef Name='Status'/><FieldRef Name='Author'/><FieldRef Name='Manager'/><FieldRef Name='ManagerApproved'/><FieldRef Name='BackupApproved'/><FieldRef Name='Category'/><FieldRef Name='Description'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ID'/><FieldRef Name='EndDate'/><FieldRef Name='EventDate'/><FieldRef Name='ID'/><FieldRef Name='Title'/><FieldRef Name='fAllDayEvent'/></ViewFields>
