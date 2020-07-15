@@ -729,20 +729,6 @@ export class Event extends React.Component<IEventProps, IEventState> {
                     ReadOnly={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit))  ? false : true}
                   />
                 </div>
-              <div>
-                <PeoplePicker
-                  webAbsoluteUrl={this.props.siteUrl}
-                  context={this.props.context}
-                  titleText={strings.ManagerLabel}
-                  principalTypes={[PrincipalType.User]}
-                  resolveDelay={1000}
-                  showtooltip={true}
-                  selectedItems={this.getManagersItems}
-                  personSelectionLimit={1}
-                  defaultSelectedUsers={this.state.managers}
-                  disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit))  ? false : true}
-                />
-              </div>
               {this.props.allowBackup && 
                 <div>
                   <PeoplePicker
@@ -759,6 +745,20 @@ export class Event extends React.Component<IEventProps, IEventState> {
                   />
                 </div>
                 }
+              <div>
+                <PeoplePicker
+                  webAbsoluteUrl={this.props.siteUrl}
+                  context={this.props.context}
+                  titleText={strings.ManagerLabel}
+                  principalTypes={[PrincipalType.User]}
+                  resolveDelay={1000}
+                  showtooltip={true}
+                  selectedItems={this.getManagersItems}
+                  personSelectionLimit={1}
+                  defaultSelectedUsers={this.state.managers}
+                  disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit))  ? false : true}
+                />
+              </div>
               </div>
             }
           </div>

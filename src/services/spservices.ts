@@ -291,7 +291,12 @@ export default class spservices {
 
     var hexValues = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e"];
     var newColor = "#";
-
+    "OoO"
+    "Arrive late"
+    "Leave early"
+    "Sick"
+    "Training"
+    "Vacation"
     for (var i = 0; i < 6; i++) {
       var x = Math.round(Math.random() * 14);
       var y = hexValues[x];
@@ -299,7 +304,140 @@ export default class spservices {
     }
     return newColor;
   }
+    /**
+   *
+   * @private
+   * @returns
+   * @memberof spservices
+   */
+  public async colorGenerateEvents(event : IEventData) {
 
+    var color : string;
+    switch(event.Category){
+      case "OoO":
+        color="#ffdf0f";
+        break;
+      case "Arrive late":
+        color="#8fff0f";
+        break;
+      case "Leave early":
+        color="#870fff";
+        break;
+      case "Sick":
+        color="#ff230f";
+        break;
+      case "Training":
+        color="#2492ff";
+        break;
+      case "Vacation":
+        color="#ffaf24";
+        break;
+      default:
+        color="#c7c7c7";
+    }
+    
+    return color;
+  }
+
+  /**
+   *
+   * @param {string} siteUrl
+   * @param {string} listId
+   * @param {Date} eventStartDate
+   * @param {Date} eventEndDate
+   * @returns {Promise< IEventData[]>}
+   * @memberof spservices
+   */
+  public async getUserEvents(siteUrl: string, listId: string, eventStartDate: Date, eventEndDate: Date): Promise<IEventData[]> {
+    let events: IEventData[] = [];
+    if (!siteUrl) {
+      return [];
+    }
+    try {
+      // Get Regional Settings TimeZone Hours to UTC
+      const siteTimeZoneHoursToUTC: number = await this.getSiteTimeZoneHoursToUtc(siteUrl);
+      // Get Category Field Choices
+      const categoryDropdownOption = await this.getChoiceFieldOptions(siteUrl, listId, 'Category');
+
+      const web = new Web(siteUrl);
+      const results = await web.lists.getById(listId).renderListDataAsStream(
+        {
+          DatesInUtc: true,
+          ViewXml: `<View><ViewFields><FieldRef Name='Status'/><FieldRef Name='Author'/><FieldRef Name='Manager'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ManagerApproved'/><FieldRef Name='BackupApproved'/><FieldRef Name='Category'/><FieldRef Name='Description'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ID'/><FieldRef Name='EndDate'/><FieldRef Name='EventDate'/><FieldRef Name='ID'/><FieldRef Name='Title'/><FieldRef Name='fAllDayEvent'/></ViewFields>
+          <Query>
+          <Where>             
+            <Or>     
+              <Or>            
+                <Eq>
+                  <FieldRef Name='Manager'/>
+                    <Value Type='Text'>${this.context.pageContext.user.displayName}</Value>
+                </Eq>                  
+                <Eq>
+                  <FieldRef Name='Author'/>
+                    <Value Type='Text'>${this.context.pageContext.user.displayName}</Value>
+                </Eq>
+              </Or>                  
+              <Eq>
+                <FieldRef Name='ParticipantsPicker'/>
+                  <Value Type='Text'>${this.context.pageContext.user.displayName}</Value>
+              </Eq>
+            </Or> 
+          </Where>
+          </Query>
+          <RowLimit Paged=\"FALSE\">2000</RowLimit>
+          </View>`
+        }
+      );
+      if (results && results.Row.length > 0) {
+        for (const event of results.Row) {
+          const initialsArray: string[] = event.Author[0].title.split(' ');
+          //const initials: string = "test";
+          const initials: string = initialsArray[0].charAt(0) + initialsArray[initialsArray.length - 1].charAt(0);
+          const userPictureUrl = await this.getUserProfilePictureUrl(`i:0#.f|membership|${event.Author[0].email}`);
+
+         
+          const fAllDayEvent: boolean =  (event.fAllDayEvent == "Yes") ? true : false;         
+
+          const backupId: number = ( event.ParticipantsPicker[0] != null) ? event.ParticipantsPicker[0].id : null;    
+          const backupObj : any = (backupId != null) ? (await web.siteUsers.getById(backupId).get()).Title : null;                   
+          const backupApproved: boolean =  (event.BackupApproved == "Yes") ? true : false;   
+          const managerId: number = ( event.Manager[0] != null) ? event.Manager[0].id : null;    
+          const managerObj : any = (managerId != null) ? (await web.siteUsers.getById(managerId).get()).Title : null;                   
+          const managerApproved: boolean =  (event.ManagerApproved == "Yes") ? true : false;       
+
+          const startDate =  new Date(moment(event.EventDate).toISOString());
+          const endDate = new Date(moment(event.EndDate).toISOString());
+          events.push({
+            Status: event.Status,
+            id: event.ID,
+            title: event.Author[0].title + " " + event.Category,
+            Description: event.Description,
+            start: startDate,
+            end: endDate,
+            ownerEmail: event.Author[0].email,
+            ownerPhoto: userPictureUrl ?
+              `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${event.Author[0].email}&UA=0&size=HR96x96` : '',
+            ownerInitial: initials,
+            //color: await this.colorGenerate(),
+            color: await this.colorGenerateEvents(event),
+            ownerName: event.Author[0].title,
+            backup: backupId,      
+            backupName: backupObj,
+            backupApproved: backupApproved,      
+            manager : managerId,       
+            managerName: managerObj,
+            managerApproved: managerApproved,   
+            allDayEvent: fAllDayEvent,
+            Category: event.Category
+          });
+        }
+      }
+      // Return Data
+      return events;
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
 
   /**
    *
@@ -408,7 +546,7 @@ export default class spservices {
 
           const startDate =  new Date(moment(event.EventDate).toISOString());
           const endDate = new Date(moment(event.EndDate).toISOString());
-          if ((allowPending || (!allowPending && managerApproved)) && event.Status != "Cancelled")
+          if ((allowPending || (!allowPending && managerApproved)) && event.Status !== "Cancelled" && event.Status !== "Rejected" )
           events.push({
             id: event.ID,
             title: event.Author[0].title + " " + event.Category,
@@ -420,7 +558,7 @@ export default class spservices {
               `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${event.Author[0].email}&UA=0&size=HR96x96` : '',
             ownerInitial: initials,
             //color: await this.colorGenerate(),
-            color: CategoryColorValue.length > 0 ? CategoryColorValue[0].color : await this.colorGenerate,
+            color: await this.colorGenerateEvents(event),
             ownerName: event.Author[0].title,
             backup: backupId,      
             backupName: backupObj,

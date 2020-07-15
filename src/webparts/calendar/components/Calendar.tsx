@@ -25,7 +25,7 @@ import {
   SpinnerSize,
   MessageBar,
   MessageBarType,
-
+  DefaultButton
 
 } from 'office-ui-fabric-react';
 import { WebPartTitle } from "@pnp/spfx-controls-react/lib/WebPartTitle";
@@ -33,6 +33,7 @@ import { Placeholder } from "@pnp/spfx-controls-react/lib/Placeholder";
 import { DisplayMode } from '@microsoft/sp-core-library';
 import spservices from '../../../services/spservices';
 import { Event } from '../../../controls/Event/event';
+import { RequestList } from '../../../controls/RequestsList/requestList';
 import { IPanelModelEnum } from '../../../controls/Event/IPanelModeEnum';
 import { IEventData } from './../../../services/IEventData';
 import { IUserPermissions } from './../../../services/IUserPermissions';
@@ -61,11 +62,13 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
       isloading: true,
       hasError: false,
       errorMessage: '',
+      showRequests: false
     };
 
     this.onDismissPanel = this.onDismissPanel.bind(this);
     this.onSelectEvent = this.onSelectEvent.bind(this);
     this.onSelectSlot = this.onSelectSlot.bind(this);
+    this.onShowRequests = this.onShowRequests.bind(this);
     this.spService = new spservices(this.props.context);
     moment.locale(this.props.context.pageContext.cultureInfo.currentUICultureName);
 
@@ -83,6 +86,14 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
   private onSelectEvent(event: any) {
     this.setState({ showDialog: true, selectedEvent: event, panelMode: IPanelModelEnum.edit });
   }
+  /**
+   * @private
+   * @param {*} event
+   * @memberof Calendar
+   */
+  private onShowRequests() {
+    this.setState({ showRequests: true});
+  }
 
   /**
    *
@@ -92,7 +103,7 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
    */
   private async onDismissPanel(refresh: boolean) {
 
-    this.setState({ showDialog: false });
+    this.setState({ showDialog: false, showRequests: false });
     if (refresh === true) {
       this.setState({ isloading: true });
       await this.loadEvents();
@@ -185,7 +196,7 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
     };
     const allowBackup : boolean = (event.backupName != '' &&  event.backupName != null) ? true : false;
     const approvalColor : number = (event.backupApproved) ? 4 : 13;
-    const approvalStatus : string = (event.managerApproved) ? "Approved by " + event.managerName : "Requested";
+    const approvalStatus : string = (event.managerApproved) ? "Approved by " + event.managerName : (event.status) === "Rejected" ? "Rejected" : "Requested";
     const approvalColorHex : string = (event.managerApproved) ? "#96e884" : "#e88484";
     /**
      * @returns {JSX.Element}
@@ -320,6 +331,7 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
               // Test if is loading Events
               <div>
                 {this.state.isloading ? <Spinner size={SpinnerSize.large} label={strings.LoadingEventsLabel} /> :
+                  <>
                   <div className={styles.container}>
                     <BigCalendar
                       localizer={localizer}
@@ -347,6 +359,10 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
                       }
                     />
                   </div>
+                  <div className={styles.calendarFooterControls}>
+                    <DefaultButton type="button" onClick={() => this.onShowRequests()}>View My Requests</DefaultButton>
+                  </div>
+                  </>
                 }
               </div>
         }
@@ -364,6 +380,19 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
             listId={this.props.list}
             allowEdit={this.props.allowEdit}
             allowBackup={this.props.allowBackup}
+          />
+        }
+        {
+          this.state.showRequests &&
+          <RequestList
+            onDissmissPanel={this.onDismissPanel}
+            showPanel={this.state.showRequests}
+            context={this.props.context}
+            siteUrl={this.props.siteUrl}
+            listId={this.props.list}
+            list={this.props.list}
+            eventStartDate={this.props.eventStartDate}
+            eventEndDate={this.props.eventEndDate}
           />
         }
       </div>

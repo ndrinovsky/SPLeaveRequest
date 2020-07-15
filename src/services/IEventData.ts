@@ -16,5 +16,6 @@ export interface IEventData {
   manager?: number;
   managerName?: string;
   managerApproved: boolean;
+  Status?: string;
   Category?: string;
 }

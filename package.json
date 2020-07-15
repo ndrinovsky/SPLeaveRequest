@@ -1,5 +1,5 @@
 {
-  "name": "Leave Request Calendar",
+  "name": "leave-request-calendar",
   "version": "1.0.6",
   "private": true,
   "engines": {
@@ -35,6 +35,7 @@
     "draft-js": "^0.10.5",
     "draftjs-to-html": "^0.8.4",
     "globalize": "^1.4.2",
+    "gulp": "^3.9.1",
     "immutable": "^4.0.0-rc.12",
     "jquery": "^3.3.1",
     "moment": "^2.24.0",
@@ -58,7 +59,6 @@
     "@types/mocha": "2.2.38",
     "@voitanos/jest-preset-spfx-react16": "^1.1.0",
     "ajv": "~5.2.2",
-    "gulp": "~3.9.1",
     "gulp-sequence": "1.0.0",
     "gulp-stylelint": "^8.0.0",
     "jest": "^23.6.0",

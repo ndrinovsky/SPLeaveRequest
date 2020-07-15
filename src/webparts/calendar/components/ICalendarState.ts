@@ -2,6 +2,7 @@ import { IPanelModelEnum} from '../../../controls/Event/IPanelModeEnum';
 import { IEventData } from './../../../services/IEventData';
 export interface ICalendarState {
   showDialog: boolean;
+  showRequests: boolean;
   eventData:  IEventData[];
   selectedEvent: IEventData;
   panelMode?: IPanelModelEnum;
