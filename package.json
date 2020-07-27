@@ -32,6 +32,7 @@
     "@types/react-big-calendar": "^0.20.13",
     "@types/react-dom": "16.0.5",
     "@types/webpack-env": "1.13.1",
+    "@uifabric/react-hooks": "^7.6.2",
     "draft-js": "^0.10.5",
     "draftjs-to-html": "^0.8.4",
     "globalize": "^1.4.2",

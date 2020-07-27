@@ -15,7 +15,33 @@
 .description:hover {
   border-color: rgb( 51, 51, 51 );
 }
-
+.right{
+  width: 100%;
+  text-align: right;
+}
+.acceptedFilter > label > div {
+  background-color: #e3ffdb;
+  border-color: black;
+}
+.pendingFilter > label > div {
+  background-color: #f4f5c4;
+  border-color: black;
+}
+.rejectedFilter > label > div {
+  background-color: #f0c7c2;
+  border-color: black;
+}
+.cancelledFilter > label > div {
+  background-color: #d9d9d9;
+  border-color: black;
+}
+.cancelledFilter > label > div > i,
+.rejectedFilter > label > div > i,
+.acceptedFilter > label > div > i,
+.pendingFilter > label > div > i
+{
+  color: black;
+}
 .calendar {
   .container {
     max-width: 100%;

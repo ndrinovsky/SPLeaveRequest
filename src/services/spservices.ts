@@ -2,7 +2,7 @@
 // March 2019
 
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { sp, Web, PermissionKind, RegionalSettings } from '@pnp/sp';
+import { sp, Web, PermissionKind, RegionalSettings, UserProfile } from '@pnp/sp';
 import { graph, } from "@pnp/graph";
 import { IEventData } from './IEventData';
 import * as moment from 'moment';
@@ -315,16 +315,16 @@ export default class spservices {
     var color : string;
     switch(event.Category){
       case "OoO":
-        color="#ffdf0f";
+        color="#ff230f";
         break;
       case "Arrive late":
-        color="#8fff0f";
+        color="#27b300";
         break;
       case "Leave early":
-        color="#870fff";
+        color="#448000";
         break;
       case "Sick":
-        color="#ff230f";
+        color="#c7c7c7";
         break;
       case "Training":
         color="#2492ff";
@@ -338,7 +338,32 @@ export default class spservices {
     
     return color;
   }
-
+  /**
+   *
+   * @param {string} siteUrl
+   * @returns {Promise< any[]>}
+   * @memberof spservices
+   */
+  public async getUserManager(siteUrl: string): Promise<string[]> {
+  if (!siteUrl) {
+    return [];
+  }
+  try {
+    const profile = await sp.profiles.myProperties.get();
+    // Properties are stored in Key/Value pairs,
+    // so parse into an object called userProperties
+    var props = {};
+      profile.UserProfileProperties.forEach((prop) => {
+      props[prop.Key] = prop.Value;
+    });
+    profile.userProperties = props;
+    var result = [];
+    result.push((await sp.web.siteUsers.getByLoginName(profile.userProperties.Manager).get()).UserPrincipalName);
+    return result;
+  }catch (error) {
+    return Promise.reject(error);
+  }
+}
   /**
    *
    * @param {string} siteUrl
@@ -383,6 +408,9 @@ export default class spservices {
               </Eq>
             </Or> 
           </Where>
+          <OrderBy>
+            <FieldRef Name="EventDate"  Ascending = "FALSE"/>
+          </OrderBy>
           </Query>
           <RowLimit Paged=\"FALSE\">2000</RowLimit>
           </View>`
@@ -390,21 +418,20 @@ export default class spservices {
       );
       if (results && results.Row.length > 0) {
         for (const event of results.Row) {
+
           const initialsArray: string[] = event.Author[0].title.split(' ');
           //const initials: string = "test";
           const initials: string = initialsArray[0].charAt(0) + initialsArray[initialsArray.length - 1].charAt(0);
           const userPictureUrl = await this.getUserProfilePictureUrl(`i:0#.f|membership|${event.Author[0].email}`);
 
          
-          const fAllDayEvent: boolean =  (event.fAllDayEvent == "Yes") ? true : false;         
-
+          const fAllDayEvent: boolean =  (event.fAllDayEvent == "Yes") ? true : false;
           const backupId: number = ( event.ParticipantsPicker[0] != null) ? event.ParticipantsPicker[0].id : null;    
           const backupObj : any = (backupId != null) ? (await web.siteUsers.getById(backupId).get()).Title : null;                   
           const backupApproved: boolean =  (event.BackupApproved == "Yes") ? true : false;   
           const managerId: number = ( event.Manager[0] != null) ? event.Manager[0].id : null;    
           const managerObj : any = (managerId != null) ? (await web.siteUsers.getById(managerId).get()).Title : null;                   
-          const managerApproved: boolean =  (event.ManagerApproved == "Yes") ? true : false;       
-
+          const managerApproved: boolean =  (event.ManagerApproved == "Yes") ? true : false;
           const startDate =  new Date(moment(event.EventDate).toISOString());
           const endDate = new Date(moment(event.EndDate).toISOString());
           events.push({

@@ -249,25 +249,24 @@ export class Event extends React.Component<IEventProps, IEventState> {
         editorState = EditorState.createWithContent(contentState);
       }
 
-      // testa  attendees
-      const attendees = this.props.event.backup;
+      //  backup
+      const backup = this.props.event.backup;
       let selectedUsers: string[] = [];
-      if (attendees && attendees != null) {
-          let user: any = await this.spService.getUserById(attendees, this.props.siteUrl);
+      if (backup && backup != null) {
+          let user: any = await this.spService.getUserById(backup, this.props.siteUrl);
           if (user) {
             selectedUsers.push(user.UserPrincipalName);
           
         }
       }
 
-      // testa  managers
+      // managers
       const manager = this.props.event.manager;
       let managers: string[] = [];
       if (managers && managers != null) {
           let user: any = await this.spService.getUserById(manager, this.props.siteUrl);
           if (user) {
             managers.push(user.UserPrincipalName);
-          
         }
       }
 
@@ -289,6 +288,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
         allDayEventState: this.props.event.allDayEvent,
       });
     } else {
+      const manager : string[] = await this.spService.getUserManager(this.props.siteUrl);
       editorState = EditorState.createEmpty();
       this.setState({
         startDate: this.props.startDate ? this.props.startDate : new Date(),
@@ -297,6 +297,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
         userPermissions: userListPermissions,
         isloading: false,
         siteRegionalSettings: siteRegionalSettigns,
+        managers: manager
       });
     }
   }

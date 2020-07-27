@@ -6,13 +6,14 @@ import { escape } from '@microsoft/sp-lodash-subset';
 import * as moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { PeoplePicker, PrincipalType } from "@pnp/spfx-controls-react/lib/PeoplePicker";
+import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import {
   Panel,
   PanelType,
   TextField,
   Label,
   extendComponent,
-  DetailsList,
+  ShimmeredDetailsList,
   SelectionMode,
   IColumn,
   IDetailsListProps,
@@ -41,8 +42,10 @@ import {
   Dialog,
   DialogType,
   DialogFooter,
-  Toggle
-
+  Toggle,
+  Stack,
+  IStackTokens,
+  ProgressIndicator
 }
   from 'office-ui-fabric-react';
 import { addMonths, addYears } from 'office-ui-fabric-react/lib/utilities/dateMath/DateMath';
@@ -70,13 +73,19 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
     super(props);
 
     this.state = {
+        filterText: "",
         showPanel: false,
         siteRegionalSettings: undefined,
         isloading: false,
         hasError: false,
         displayDialog: false,
         errorMessage: "",
-        eventData: [],
+        allEventData: [],
+        filteredData: [],
+        cancelledFilter: true,
+        acceptedFilter: true,
+        rejectedFilter: true,
+        pendingFilter: true,
         columns: [] = [
             {
                 key: 'title',
@@ -86,7 +95,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
                 maxWidth: 200,
                 isRowHeader: true,
                 isResizable: true,
-                isSorted: true,
+                isSorted: false,
                 isSortedDescending: false,
                 sortAscendingAriaLabel: 'Sorted A to Z',
                 sortDescendingAriaLabel: 'Sorted Z to A',
@@ -102,7 +111,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
                 maxWidth: 100,
                 isRowHeader: true,
                 isResizable: true,
-                isSorted: true,
+                isSorted: false,
                 isSortedDescending: false,
                 sortAscendingAriaLabel: 'Sorted A to Z',
                 sortDescendingAriaLabel: 'Sorted Z to A',
@@ -119,7 +128,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
                 isRowHeader: true,
                 isResizable: true,
                 isSorted: true,
-                isSortedDescending: false,
+                isSortedDescending: true,
                 sortAscendingAriaLabel: 'Sorted A to Z',
                 sortDescendingAriaLabel: 'Sorted Z to A',
                 onColumnClick: this._onColumnClick,
@@ -137,7 +146,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
                 maxWidth: 300,
                 isRowHeader: true,
                 isResizable: true,
-                isSorted: true,
+                isSorted: false,
                 isSortedDescending: false,
                 sortAscendingAriaLabel: 'Sorted A to Z',
                 sortDescendingAriaLabel: 'Sorted Z to A',
@@ -156,7 +165,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
                 maxWidth: 300,
                 isRowHeader: true,
                 isResizable: true,
-                isSorted: true,
+                isSorted: false,
                 isSortedDescending: false,
                 sortAscendingAriaLabel: 'Sorted A to Z',
                 sortDescendingAriaLabel: 'Sorted Z to A',
@@ -196,7 +205,6 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
 
   private _onRenderRow: IDetailsListProps['onRenderRow'] = props => {
     const customStyles: Partial<IDetailsRowStyles> = {};
-    console.log(props.item)
     if (props) {
         switch(props.item.Status){
             case("Pending"):
@@ -219,7 +227,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
   };
 
   private _onColumnClick = (ev: React.MouseEvent<HTMLElement>, column: IColumn): void => {
-    const { columns, eventData } = this.state;
+    const { columns, filteredData } = this.state;
     const newColumns: IColumn[] = columns.slice();
     const currColumn: IColumn = newColumns.filter(currCol => column.key === currCol.key)[0];
     newColumns.forEach((newCol: IColumn) => {
@@ -231,10 +239,10 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
         newCol.isSortedDescending = true;
       }
     });
-    const newItems : IEventData[] = _copyAndSort(eventData, currColumn.fieldName!, currColumn.isSortedDescending);
+    const newItems : IEventData[] = _copyAndSort(filteredData, currColumn.fieldName!, currColumn.isSortedDescending);
     this.setState({
       columns: newColumns,
-      eventData: newItems,
+      filteredData: newItems,
     });
   };
   /**
@@ -275,12 +283,35 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
         event.start.setTime(event.start.getTime() + (7*60*60*1000)); 
         }
       }
-      console.log(eventsData)
-      this.setState({ eventData: eventsData, hasError: false, errorMessage: "" });
+      this.setState({ allEventData: eventsData, filteredData: eventsData, hasError: false, errorMessage: "" });
     } catch (error) {
       this.setState({ hasError: true, errorMessage: error.message, isloading: false });
     }
   }
+  /**
+   *
+   *
+   * @memberof RequestList
+   */
+  private _onChangeText = (ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, text: string): void => {
+    this.setState({ filterText : text,
+      filteredData: text ? this.state.allEventData.filter(i => i.ownerName.toLowerCase().indexOf(text.toLowerCase()) > -1 && ((i.Status === "Accepted" && this.state.acceptedFilter) || 
+      (i.Status === "Rejected" && this.state.rejectedFilter) || (i.Status === "Pending" && this.state.pendingFilter) || (i.Status === "Cancelled" && this.state.cancelledFilter))) : 
+      this.state.allEventData.filter(i => ((i.Status === "Accepted" && this.state.acceptedFilter) || (i.Status === "Rejected" && this.state.rejectedFilter) || 
+      (i.Status === "Pending" && this.state.pendingFilter) || (i.Status === "Cancelled" && this.state.cancelledFilter))),
+    });
+  };
+    /**
+   *
+   *
+   * @memberof RequestList
+   */
+  private _onFilter = (ev: React.ChangeEvent<HTMLInputElement>, isChecked: boolean): void => {
+    var element = ev.target as HTMLInputElement;
+    
+    const newState = { [element.name]: !this.state[element.name as keyof IRequestListState] } as any;
+    this.setState(newState);
+  };
 
   /**
    *
@@ -305,6 +336,18 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
   public componentWillMount() {
 
   }
+  /**
+   *
+   * @memberof RequestList
+   */
+public componentDidUpdate(prevProps, prevState){
+  if(this.state.rejectedFilter !== prevState.rejectedFilter || this.state.acceptedFilter !== prevState.acceptedFilter || this.state.pendingFilter !== prevState.pendingFilter || this.state.cancelledFilter !== prevState.cancelledFilter) {
+    this.setState({
+      filteredData: this.state.allEventData.filter(i => i.ownerName.toLowerCase().indexOf(this.state.filterText.toLowerCase()) > -1 && ((i.Status === "Accepted" && this.state.acceptedFilter) || 
+      (i.Status === "Rejected" && this.state.rejectedFilter) || (i.Status === "Pending" && this.state.pendingFilter) || (i.Status === "Cancelled" && this.state.cancelledFilter))),
+    });
+}
+}
 
   /**
    *
@@ -345,6 +388,9 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
           isFooterAtBottom={true}
           onRenderFooterContent={this.onRenderFooterContent}
         >
+        <div className={styles.right}>
+          <a href='https://gov.flow.microsoft.us/manage/environments/Default-ca71c0aa-a028-43ec-8c30-056b60ed7414/approvals/received' target='_blank'>Click here to accept your pending requests</a>
+        </div>
           <div style={{ width: '100%' }}>
             {
               this.state.hasError &&
@@ -352,20 +398,27 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
                 {this.state.errorMessage}
               </MessageBar>
             }
-            {
-              this.state.isloading && (
-                <Spinner size={SpinnerSize.large} />
-              )
-            }
-            {
-              !this.state.isloading &&
+
               <div>
-                  <DetailsList items={this.state.eventData} 
+                  <TextField label="Filter by Requestor name:" onChange={this._onChangeText} /><br/>
+                  <Stack horizontal horizontalAlign="space-evenly" verticalAlign="center"><br/>
+                    <Checkbox className={styles.acceptedFilter} label="Accepted" checked={this.state.acceptedFilter} name="acceptedFilter" onChange={this._onFilter} />
+                    <Checkbox className={styles.pendingFilter} label="Pending" checked={this.state.pendingFilter} name="pendingFilter" onChange={this._onFilter} />
+                    <Checkbox className={styles.cancelledFilter} label="Cancelled" checked={this.state.cancelledFilter} name="cancelledFilter" onChange={this._onFilter} />
+                    <Checkbox className={styles.rejectedFilter} label="Rejected" checked={this.state.rejectedFilter} name="rejectedFilter" onChange={this._onFilter} />
+                  </Stack>
+                  {
+                    this.state.isloading && (
+                      //<Spinner size={SpinnerSize.large} />
+                      <ProgressIndicator/>
+                    )
+                  }
+                  <ShimmeredDetailsList items={this.state.filteredData}                  
                     onRenderRow={this._onRenderRow}
                     columns={columns}
+                    enableShimmer={this.state.isloading }
                     selectionMode={SelectionMode.none} />
               </div>
-            }
           </div>
         </Panel>
       </div>

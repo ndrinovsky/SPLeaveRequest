@@ -10,6 +10,12 @@ export interface IRequestListState {
   hasError: boolean;
   displayDialog: false;
   errorMessage: string;
-  eventData:  IEventData[];
+  allEventData:  IEventData[];
+  filteredData:  IEventData[];
   columns: IColumn[];
+  cancelledFilter: boolean;
+  acceptedFilter: boolean;
+  rejectedFilter: boolean;
+  pendingFilter: boolean;
+  filterText: string;
 }
