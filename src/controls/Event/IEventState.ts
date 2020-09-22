@@ -25,4 +25,5 @@ export interface IEventState {
   userPermissions?: IUserPermissions;
   isloading:boolean;
   siteRegionalSettings: any;
+  noManagerRequired: boolean;
 }

@@ -361,7 +361,8 @@ export default class spservices {
     result.push((await sp.web.siteUsers.getByLoginName(profile.userProperties.Manager).get()).UserPrincipalName);
     return result;
   }catch (error) {
-    return Promise.reject(error);
+    return [];
+    //return Promise.reject(error);
   }
 }
   /**

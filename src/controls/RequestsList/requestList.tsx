@@ -173,7 +173,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
                 data: 'string',
                 isPadded: true,     
                 onRender: (item: IEventData) => {
-                    return <span>{item.backupApproved? item.backupName + " (Accepted)": item.Status === "Pending" ? item.backupName + " (Pending)" : item.backupName + " (Declined)"}</span>;
+                    return <span>{item.backupName !== null ? (item.backupApproved? item.backupName + " (Accepted)": item.Status === "Pending" ? item.backupName + " (Pending)" : item.backupName + " (Declined)") : ""}</span>;
                   },
             },
             {

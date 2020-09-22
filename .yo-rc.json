@@ -21,7 +21,7 @@
     "environment": "spo",
     "framework": "react",
     "plusBeta": true,
-    "isCreatingSolution": true,
+    "isCreatingSolution": false,
     "version": "1.8.0",
     "libraryName": "react-calendar",
     "libraryId": "3a13208b-3874-4036-9262-4edd22e88187",

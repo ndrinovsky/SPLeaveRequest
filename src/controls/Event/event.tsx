@@ -95,6 +95,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
       isloading: false,
       siteRegionalSettings: undefined,
       allDayEventState: false,
+      noManagerRequired: false,
       userPermissions: { hasPermissionAdd: false, hasPermissionDelete: false, hasPermissionEdit: false, hasPermissionView: false },
     };
     // local copia of props
@@ -167,15 +168,6 @@ export class Event extends React.Component<IEventProps, IEventState> {
     eventData.Description = draftToHtml(convertToRaw(this.state.editorState.getCurrentContent()));
     eventData.allDayEvent = this.state.allDayEventState;
     try {
-      if (this.props.allowBackup && (this.attendees.length == 0 && eventData.backup == null)){
-        throw  new Error("Please Select Backup");
-      }
-      if (eventData.Category == null){
-        throw  new Error("Please Select Category");
-      }
-      if  (this.managers.length == 0 && eventData.manager == null){
-        throw  new Error("Please Select Manager");
-      }
 
       if (this.props.allowBackup){
         for (const user of this.attendees) {
@@ -186,6 +178,15 @@ export class Event extends React.Component<IEventProps, IEventState> {
       for (const user of this.managers) {        
         const userInfo: any= await this.spService.getUserByLoginName(user.id, this.props.siteUrl);
         eventData.manager = (parseInt(userInfo.Id));
+      }
+      if (this.props.allowBackup && (this.attendees.length == 0 && eventData.backup == null) && !this.state.noManagerRequired){
+        throw  new Error("Please Select Backup");
+      }
+      if (eventData.Category == null){
+        throw  new Error("Please Select Category");
+      }
+      if  (this.managers.length == 0 && eventData.manager == null && !this.state.noManagerRequired){
+        throw  new Error("Please Select Manager");
       }
 
       this.setState({ isSaving: true });
@@ -290,6 +291,10 @@ export class Event extends React.Component<IEventProps, IEventState> {
     } else {
       const manager : string[] = await this.spService.getUserManager(this.props.siteUrl);
       editorState = EditorState.createEmpty();
+      console.log(manager);
+      let user: any = await this.spService.getUserById(+manager[0], this.props.siteUrl);
+      this.managers = user; 
+      console.log(user);
       this.setState({
         startDate: this.props.startDate ? this.props.startDate : new Date(),
         endDate: this.props.endDate ? this.props.endDate : new Date(),
@@ -519,6 +524,14 @@ export class Event extends React.Component<IEventProps, IEventState> {
   private onToggleStateChange(){
 
   }
+  private onManagerRequiredtChange(ev: React.MouseEvent<HTMLElement>, checked: boolean) {
+    ev.preventDefault();
+    
+    if (checked){
+
+    }
+    this.setState({ noManagerRequired: checked });
+  }
 
   private onAllDayEventChange(ev: React.MouseEvent<HTMLElement>, checked: boolean) {
     ev.preventDefault();
@@ -730,6 +743,15 @@ export class Event extends React.Component<IEventProps, IEventState> {
                     ReadOnly={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit))  ? false : true}
                   />
                 </div>
+                <Toggle                
+                  defaultChecked={this.state.noManagerRequired}
+                  label="Manager Approval Required"
+                  onText="Yes"
+                  offText="No"
+                  onChange={this.onManagerRequiredtChange}
+                  disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit)) ? false : true}
+                />
+                <br />
               {this.props.allowBackup && 
                 <div>
                   <PeoplePicker
@@ -742,7 +764,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
                     selectedItems={this.getPeoplePickerItems}
                     personSelectionLimit={1}
                     defaultSelectedUsers={this.state.selectedUsers}
-                    disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit))  ? false : true}
+                    disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit) || !this.state.noManagerRequired)  ? false : true}
                   />
                 </div>
                 }
@@ -757,7 +779,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
                   selectedItems={this.getManagersItems}
                   personSelectionLimit={1}
                   defaultSelectedUsers={this.state.managers}
-                  disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit))  ? false : true}
+                  disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit) || !this.state.noManagerRequired)  ? false : true}
                 />
               </div>
               </div>
