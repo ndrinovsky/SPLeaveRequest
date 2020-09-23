@@ -50,6 +50,7 @@ import draftToHtml from 'draftjs-to-html';
 import htmlToDraft from 'html-to-draftjs';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import spservices from '../../services/spservices';
+import { sp } from '@pnp/pnpjs';
 
 const today: Date = new Date(Date.now());
 const DayPickerStrings: IDatePickerStrings = {
@@ -95,7 +96,6 @@ export class Event extends React.Component<IEventProps, IEventState> {
       isloading: false,
       siteRegionalSettings: undefined,
       allDayEventState: false,
-      noManagerRequired: false,
       userPermissions: { hasPermissionAdd: false, hasPermissionDelete: false, hasPermissionEdit: false, hasPermissionView: false },
     };
     // local copia of props
@@ -114,7 +114,6 @@ export class Event extends React.Component<IEventProps, IEventState> {
     this.closeDialog = this.closeDialog.bind(this);
     this.confirmDelete = this.confirmDelete.bind(this);
     this.onAllDayEventChange = this.onAllDayEventChange.bind(this);
-    this.onManagerRequiredChange = this.onManagerRequiredChange.bind(this);
     this.onCategoryChanged = this.onCategoryChanged.bind(this);    
     this.getManagersItems = this.getManagersItems.bind(this);
     //this.enableSave = this.enableSave.bind(this);
@@ -169,7 +168,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
     eventData.Description = draftToHtml(convertToRaw(this.state.editorState.getCurrentContent()));
     eventData.allDayEvent = this.state.allDayEventState;
     try {
-      if(!this.state.noManagerRequired){
+      if(this.props.context.pageContext.user.email !== 'ChathamEA@co.monterey.ca.us'){
         if (this.props.allowBackup){
           for (const user of this.attendees) {
             const userInfo: any= await this.spService.getUserByLoginName(user.id, this.props.siteUrl);
@@ -187,13 +186,13 @@ export class Event extends React.Component<IEventProps, IEventState> {
           }
         }
       }
-      if (this.props.allowBackup && (this.attendees.length == 0 && eventData.backup == null) && !this.state.noManagerRequired){
+      if (this.props.allowBackup && (this.attendees.length == 0 && eventData.backup == null && this.props.context.pageContext.user.email !== 'ChathamEA@co.monterey.ca.us')){
         throw  new Error("Please Select Backup");
       }
       if (eventData.Category == null){
         throw  new Error("Please Select Category");
       }
-      if  (this.managers.length == 0 && eventData.manager == null && !this.state.noManagerRequired){
+      if  (this.managers.length == 0 && eventData.manager == null && this.props.context.pageContext.user.email !== 'ChathamEA@co.monterey.ca.us'){
         throw  new Error("Please Select Manager");
       }
 
@@ -278,9 +277,9 @@ export class Event extends React.Component<IEventProps, IEventState> {
             managers.push(user.UserPrincipalName);
         }
       }
-      if(backup === null && this.props.event.managerName === this.props.event.ownerName){
-        this.setState({noManagerRequired:true});
-      }
+      // if(backup === null && this.props.event.managerName === this.props.event.ownerName){
+      //   this.setState({noManagerRequired:true});
+      // }
       // Update Component Data
       this.setState({
         eventData: this.props.event,
@@ -369,7 +368,6 @@ export class Event extends React.Component<IEventProps, IEventState> {
    */
   private getManagersItems(items: any[]) {
 
-    console.log(items);
     this.managers = [];
     this.managers = items; 
   }
@@ -487,7 +485,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
           {strings.CancelButtonLabel}
         </DefaultButton>
         {
-          (this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit && (this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit)) && (
+          (this.props.panelMode == IPanelModelEnum.edit && (this.state.eventData.ownerEmail === this.props.context.pageContext.user.email || this.state.eventData.managerName === this.props.context.pageContext.user.displayName ) && (this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit)) && (
             <DefaultButton onClick={this.onDelete} style={{ marginBottom: '15px', marginRight: '8px', float: 'right' }}>
               {strings.DeleteButtonLabel}
             </DefaultButton>
@@ -534,14 +532,14 @@ export class Event extends React.Component<IEventProps, IEventState> {
   private onToggleStateChange(){
 
   }
-  private onManagerRequiredChange(ev: React.MouseEvent<HTMLElement>, checked: boolean) {
-    ev.preventDefault();
+  // private onManagerRequiredChange(ev: React.MouseEvent<HTMLElement>, checked: boolean) {
+  //   ev.preventDefault();
     
-    if (checked){
+  //   if (checked){
 
-    }
-    this.setState({ noManagerRequired: !checked });
-  }
+  //   }
+  //   this.setState({ noManagerRequired: !checked });
+  // }
 
   private onAllDayEventChange(ev: React.MouseEvent<HTMLElement>, checked: boolean) {
     ev.preventDefault();
@@ -753,7 +751,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
                     ReadOnly={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit))  ? false : true}
                   />
                 </div>
-                <Toggle                
+                {/* <Toggle                
                   defaultChecked={!this.state.noManagerRequired}
                   label="Manager Approval Required"
                   onText="Yes"
@@ -761,8 +759,8 @@ export class Event extends React.Component<IEventProps, IEventState> {
                   onChange={this.onManagerRequiredChange}
                   disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit)) ? false : true}
                 />
-                <br />
-              {this.props.allowBackup && !this.state.noManagerRequired &&
+                <br /> */}
+              {this.props.allowBackup && this.props.context.pageContext.user.email !== 'ChathamEA@co.monterey.ca.us' &&
                 <div>
                   <PeoplePicker
                     webAbsoluteUrl={this.props.siteUrl}
@@ -778,7 +776,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
                   />
                 </div>
                 }
-              {!this.state.noManagerRequired &&
+                {this.props.context.pageContext.user.email !== 'ChathamEA@co.monterey.ca.us' &&
                 <div>
                   <PeoplePicker
                     webAbsoluteUrl={this.props.siteUrl}
@@ -793,7 +791,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
                     disabled={(this.state.userPermissions.hasPermissionAdd || this.state.userPermissions.hasPermissionEdit) && ((this.props.panelMode == IPanelModelEnum.edit && this.props.allowEdit) || (this.props.panelMode != IPanelModelEnum.edit) )  ? false : true}
                   />
                 </div>
-              }
+                }
               </div>
             }
           </div>
