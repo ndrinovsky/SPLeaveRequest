@@ -336,6 +336,9 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
                     <BigCalendar
                       localizer={localizer}
                       selectable
+                      length={0}
+                      popup
+                      views={['month', 'week', 'day']}
                       events={this.state.eventData}
                       startAccessor="start"
                       endAccessor="end"
@@ -354,6 +357,7 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
                           'month': strings.monthLabel,
                           'week': strings.weekLabel,
                           'day': strings.dayLable,
+                          'agenda': "Daily Agenda",
                           'showMore': total => `+${total} ${strings.showMore}`
                         }
                       }

@@ -344,7 +344,7 @@ export default class spservices {
    * @returns {Promise< any[]>}
    * @memberof spservices
    */
-  public async getUserManager(siteUrl: string): Promise<string[]> {
+  public async getUserManagerPrincipalName(siteUrl: string): Promise<string[]> {
   if (!siteUrl) {
     return [];
   }
@@ -359,12 +359,41 @@ export default class spservices {
     profile.userProperties = props;
     var result = [];
     result.push((await sp.web.siteUsers.getByLoginName(profile.userProperties.Manager).get()).UserPrincipalName);
+    console.log(result);
     return result;
   }catch (error) {
     return [];
     //return Promise.reject(error);
   }
 }
+  /**
+   *
+   * @param {string} siteUrl
+   * @returns {Promise< any[]>}
+   * @memberof spservices
+   */
+  public async getUserManager(siteUrl: string): Promise<string[]> {
+    if (!siteUrl) {
+      return [];
+    }
+    try {
+      const profile = await sp.profiles.myProperties.get();
+      // Properties are stored in Key/Value pairs,
+      // so parse into an object called userProperties
+      var props = {};
+        profile.UserProfileProperties.forEach((prop) => {
+        props[prop.Key] = prop.Value;
+      });
+      profile.userProperties = props;
+      var result = [];
+      result.push((await sp.web.siteUsers.getByLoginName(profile.userProperties.Manager).get()));
+      console.log(result);
+      return result;
+    }catch (error) {
+      return [];
+      //return Promise.reject(error);
+    }
+  }
   /**
    *
    * @param {string} siteUrl
