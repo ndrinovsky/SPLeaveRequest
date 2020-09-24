@@ -5,7 +5,6 @@ export default class CalendarToolbar extends Toolbar {
 
 	componentDidMount() {
 		const view = this.props.view;
-		console.log(view)
 	}
 
 	render() {

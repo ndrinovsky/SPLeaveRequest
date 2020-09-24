@@ -211,7 +211,6 @@ export class Event extends React.Component<IEventProps, IEventState> {
       this.setState({ isSaving: false });
       this.props.onDissmissPanel(true);
     } catch (error) {
-      console.log(eventData)
       this.setState({ hasError: true, errorMessage: error.message, isSaving: false });
     }
   }
@@ -300,7 +299,6 @@ export class Event extends React.Component<IEventProps, IEventState> {
     } else {
       const manager : any = await this.spService.getUserManagerPrincipalName(this.props.siteUrl);
       editorState = EditorState.createEmpty();
-      console.log(manager[0]);
       //let user: any = await this.spService.getUserById(manager[0].Id, this.props.siteUrl);
       this.managers = manager; 
       this.setState({

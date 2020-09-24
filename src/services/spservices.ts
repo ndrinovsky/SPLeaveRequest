@@ -386,7 +386,6 @@ export default class spservices {
       profile.userProperties = props;
       var result = [];
       result.push((await sp.web.siteUsers.getByLoginName(profile.userProperties.Manager).get()));
-      console.log(result);
       return result;
     }catch (error) {
       return [];

@@ -38,6 +38,7 @@ import { IPanelModelEnum } from '../../../controls/Event/IPanelModeEnum';
 import { IEventData } from './../../../services/IEventData';
 import { IUserPermissions } from './../../../services/IUserPermissions';
 import { Item } from '@pnp/sp';
+import { event } from 'jquery';
 /*
 moment.tz('UTC')
 const localizer = BigCalendar.momentLocalizer(moment);
@@ -110,6 +111,7 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
       this.setState({ isloading: false });
     }
   }
+  
   /**
    * @private
    * @memberof Calendar
@@ -121,13 +123,18 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
 
       this.userListPermissions = await this.spService.getUserPermissions(this.props.siteUrl, this.props.list);
       const eventsData: IEventData[] = await this.spService.getEvents(escape(this.props.siteUrl), escape(this.props.list), this.props.eventStartDate.value, this.props.eventEndDate.value, this.props.allowPending);
-
+      
       for (const event of eventsData){ 
+        let startOffset = (event.start.getTimezoneOffset());
+        let endOffset = (event.end.getTimezoneOffset());
         //correct issue with items listed as all day events
         if (event.allDayEvent){
         event.end.setTime(event.end.getTime() + (7*60*60*1000)); 
         event.start.setTime(event.start.getTime() + (7*60*60*1000)); 
         }
+        //offset for DST
+        event.end.setHours(event.end.getHours() + ((endOffset - 420)/60));
+        event.start.setHours(event.start.getHours() + ((startOffset - 420)/60));
       }
       this.setState({ eventData: eventsData, hasError: false, errorMessage: "" });
 
