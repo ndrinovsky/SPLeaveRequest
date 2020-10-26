@@ -37,8 +37,6 @@ import { RequestList } from '../../../controls/RequestsList/requestList';
 import { IPanelModelEnum } from '../../../controls/Event/IPanelModeEnum';
 import { IEventData } from './../../../services/IEventData';
 import { IUserPermissions } from './../../../services/IUserPermissions';
-import { Item } from '@pnp/sp';
-import { event } from 'jquery';
 /*
 moment.tz('UTC')
 const localizer = BigCalendar.momentLocalizer(moment);
@@ -63,13 +61,15 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
       isloading: true,
       hasError: false,
       errorMessage: '',
-      showRequests: false
+      showRequests: false,
+      expand: false
     };
 
     this.onDismissPanel = this.onDismissPanel.bind(this);
     this.onSelectEvent = this.onSelectEvent.bind(this);
     this.onSelectSlot = this.onSelectSlot.bind(this);
     this.onShowRequests = this.onShowRequests.bind(this);
+    this.expand = this.expand.bind(this);
     this.spService = new spservices(this.props.context);
     moment.locale(this.props.context.pageContext.cultureInfo.currentUICultureName);
 
@@ -94,6 +94,17 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
    */
   private onShowRequests() {
     this.setState({ showRequests: true});
+  }
+  /**
+   * @private
+   * @param {*} event
+   * @memberof Calendar
+   */
+  private async expand() {
+    this.setState({ expand: !this.state.expand});
+    this.setState({ isloading: true });
+    await this.loadEvents();
+    this.setState({ isloading: false });
   }
 
   /**
@@ -338,7 +349,11 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
               // Test if is loading Events
               <div>
                 {this.state.isloading ? <Spinner size={SpinnerSize.large} label={strings.LoadingEventsLabel} /> :
+                (!this.state.expand ?
                   <>
+                  <div className={styles['button-gutter']} >
+                  <DefaultButton className={styles['expand-button']} type="button" onClick={() => this.expand()}> {this.state.expand ? "Collapse Events": "Expand Events"}</DefaultButton>
+                  </div>
                   <div className={styles.container}>
                     <BigCalendar
                       localizer={localizer}
@@ -373,7 +388,44 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
                   <div className={styles.calendarFooterControls}>
                     <DefaultButton type="button" onClick={() => this.onShowRequests()}>View My Requests</DefaultButton>
                   </div>
-                  </>
+                  </> : <>
+                  <div className={styles['button-gutter']} >
+                  <DefaultButton className={styles['expand-button']} type="button" onClick={() => this.expand()}> {this.state.expand ? "Collapse Events": "Expand Events"}</DefaultButton>
+                  </div>
+                  <div className={styles["container-expanded"]}>
+                    <BigCalendar
+                      localizer={localizer}
+                      selectable
+                      length={0}
+                      popup
+                      views={['month', 'week', 'day']}
+                      events={this.state.eventData}
+                      startAccessor="start"
+                      endAccessor="end"
+                      eventPropGetter={this.eventStyleGetter}
+                      onSelectSlot={this.onSelectSlot}
+                      components={{
+                        event: this.renderEvent
+                      }}
+                      onSelectEvent={this.onSelectEvent}
+                      defaultDate={moment().startOf('day').toDate()}
+                      messages={
+                        {
+                          'today': strings.todayLabel,
+                          'previous': strings.previousLabel,
+                          'next': strings.nextLabel,
+                          'month': strings.monthLabel,
+                          'week': strings.weekLabel,
+                          'day': strings.dayLable,
+                          'agenda': "Daily Agenda",
+                          'showMore': total => `+${total} ${strings.showMore}`
+                        }
+                      }
+                    />
+                  </div>
+                  <div className={styles.calendarFooterControls}>
+                    <DefaultButton type="button" onClick={() => this.onShowRequests()}>View My Requests</DefaultButton>
+                  </div></>)
                 }
               </div>
         }
@@ -389,7 +441,7 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
             context={this.props.context}
             siteUrl={this.props.siteUrl}
             listId={this.props.list}
-            allowEdit={this.props.allowEdit}
+            allowEdit={(this.state.selectedEvent !== undefined) ? (this.state.selectedEvent.ownerEmail === this.props.context.pageContext.user.email || this.state.selectedEvent.managerName === this.props.context.pageContext.user.displayName ) : this.props.allowEdit}
             allowBackup={this.props.allowBackup}
           />
         }

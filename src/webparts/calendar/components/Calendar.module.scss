@@ -89,7 +89,17 @@
     margin: 0px auto;
 
   }
+  .container-expanded {
+    max-width: 100%;
+    min-height: 400px;
+    height: 1200px;
+    margin: 0px auto;
+  }
 
+  .button-gutter{
+    width: 100%;
+    text-align: right;
+  }
   .plainCard {
     width: 300;
     height: 286;

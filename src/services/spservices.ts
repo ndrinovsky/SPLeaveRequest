@@ -1,14 +1,13 @@
-// João Mendes
-// March 2019
-
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { sp, Web, PermissionKind, RegionalSettings, UserProfile } from '@pnp/sp';
 import { graph, } from "@pnp/graph";
 import { IEventData } from './IEventData';
 import * as moment from 'moment';
 import * as moment_timezone from 'moment-timezone';
-import { SiteUser } from "@pnp/sp/src/siteusers";
 import { IUserPermissions } from './IUserPermissions';
+import {sp, SiteUsers, SiteUser } from "@pnp/sp/presets/all";
+import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
+import { event } from "jquery";
+import { Web, PermissionKind, RegionalSettings } from "@pnp/pnpjs";
 
 moment.utc();
 moment_timezone.tz.setDefault("Etc/UTC");
@@ -20,9 +19,10 @@ export default class spservices {
   constructor(private context: WebPartContext) {
     // Setuo Context to PnPjs and MSGraph
     sp.setup({
-      spfxContext: this.context
+      spfxContext: this.context,
+      ie11 :true
     });
-
+    
     graph.setup({
       spfxContext: this.context
     });
@@ -88,9 +88,9 @@ export default class spservices {
       const startDate = new Date(moment(newEvent.start).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
       const endDate = new Date(moment(newEvent.end).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
       
-      
+      let requestor = await web.siteUsers.getByEmail(this.context.pageContext.user.loginName).get();
       results = await web.lists.getById(listId).items.add({
-        Title:  this.context.pageContext.user.displayName + " - " + newEvent.Category,
+        Title:  requestor.Title + " - " + newEvent.Category,
         Description: newEvent.Description,
         ParticipantsPickerId: newEvent.backup,
         EventDate: startDate,
@@ -98,7 +98,8 @@ export default class spservices {
         fAllDayEvent: newEvent.allDayEvent,
         fRecurrence: false,
         Category: newEvent.Category,
-        ManagerId: newEvent.manager
+        ManagerId: newEvent.manager,
+        RequestorId: requestor.Id
       });
     } catch (error) {
       return Promise.reject(error);
@@ -123,10 +124,10 @@ export default class spservices {
 
       const startDate = new Date(moment(updateEvent.start).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
       const endDate = new Date(moment(updateEvent.end).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
-
+      let requestor = await web.siteUsers.getByEmail(this.context.pageContext.user.loginName).get();
       //"Title","fRecurrence", "fAllDayEvent","EventDate", "EndDate", "Description","ID", "Location","ParticipantsPickerId"
       results = await web.lists.getById(listId).items.getById(updateEvent.id).update({
-          Title: this.context.pageContext.user.displayName + " - " + updateEvent.Category,
+          Title: requestor.Title + " - " + updateEvent.Category,
           Description: updateEvent.Description,
           ParticipantsPickerId: updateEvent.backup,
           EventDate: startDate,
@@ -172,8 +173,8 @@ export default class spservices {
    * @returns {Promise<SiteUser>}
    * @memberof spservices
    */
-  public async getUserById(userId: number, siteUrl: string): Promise<SiteUser> {
-    let results: SiteUser = null;
+  public async getUserById(userId: number, siteUrl: string): Promise<typeof SiteUser> {
+    let results: typeof SiteUser = null;
 
     if (!userId && !siteUrl) {
       return null;
@@ -197,8 +198,8 @@ export default class spservices {
    * @returns {Promise<SiteUser>}
    * @memberof spservices
    */
-  public async getUserByLoginName(loginName: string, siteUrl: string): Promise<SiteUser> {
-    let results: SiteUser = null;
+  public async getUserByLoginName(loginName: string, siteUrl: string): Promise<typeof SiteUser> {
+    let results: typeof SiteUser = null;
 
     if (!loginName && !siteUrl) {
       return null;
@@ -247,10 +248,10 @@ export default class spservices {
       const web = new Web(siteUrl);
       const  userEffectivePermissions = await web.lists.getById(listId).effectiveBasePermissions.get();
         // chaeck user permissions
-        hasPermissionAdd = sp.web.lists.getById(listId).hasPermissions(userEffectivePermissions, PermissionKind.AddListItems);
-        hasPermissionEdit =sp.web.lists.getById(listId).hasPermissions(userEffectivePermissions, PermissionKind.EditListItems);
-        hasPermissionDelete =sp.web.lists.getById(listId).hasPermissions(userEffectivePermissions, PermissionKind.DeleteListItems);
-        hasPermissionView = sp.web.lists.getById(listId).hasPermissions(userEffectivePermissions, PermissionKind.ViewListItems);
+        hasPermissionAdd = web.lists.getById(listId).hasPermissions(userEffectivePermissions, PermissionKind.AddListItems);
+        hasPermissionEdit = web.lists.getById(listId).hasPermissions(userEffectivePermissions, PermissionKind.EditListItems);
+        hasPermissionDelete =web.lists.getById(listId).hasPermissions(userEffectivePermissions, PermissionKind.DeleteListItems);
+        hasPermissionView = web.lists.getById(listId).hasPermissions(userEffectivePermissions, PermissionKind.ViewListItems);
         userPermissions = { hasPermissionAdd: hasPermissionAdd, hasPermissionEdit: hasPermissionEdit, hasPermissionDelete: hasPermissionDelete, hasPermissionView: hasPermissionView };
     } catch (error) {
       return Promise.reject(error);
@@ -416,7 +417,7 @@ export default class spservices {
       const results = await web.lists.getById(listId).renderListDataAsStream(
         {
           DatesInUtc: true,
-          ViewXml: `<View><ViewFields><FieldRef Name='Status'/><FieldRef Name='Author'/><FieldRef Name='Manager'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ManagerApproved'/><FieldRef Name='BackupApproved'/><FieldRef Name='Category'/><FieldRef Name='Description'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ID'/><FieldRef Name='EndDate'/><FieldRef Name='EventDate'/><FieldRef Name='ID'/><FieldRef Name='Title'/><FieldRef Name='fAllDayEvent'/></ViewFields>
+          ViewXml: `<View><ViewFields><FieldRef Name='Status'/><FieldRef Name='Requestor'/><FieldRef Name='Author'/><FieldRef Name='Manager'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ManagerApproved'/><FieldRef Name='BackupApproved'/><FieldRef Name='Category'/><FieldRef Name='Description'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ID'/><FieldRef Name='EndDate'/><FieldRef Name='EventDate'/><FieldRef Name='ID'/><FieldRef Name='Title'/><FieldRef Name='fAllDayEvent'/></ViewFields>
           <Query>
           <Where>             
             <Or>     
@@ -426,7 +427,7 @@ export default class spservices {
                     <Value Type='Text'>${this.context.pageContext.user.displayName}</Value>
                 </Eq>                  
                 <Eq>
-                  <FieldRef Name='Author'/>
+                  <FieldRef Name='Requestor'/>
                     <Value Type='Text'>${this.context.pageContext.user.displayName}</Value>
                 </Eq>
               </Or>                  
@@ -447,35 +448,35 @@ export default class spservices {
       if (results && results.Row.length > 0) {
         for (const event of results.Row) {
 
-          const initialsArray: string[] = event.Author[0].title.split(' ');
+          const initialsArray: string[] = event.Requestor[0].title.split(' ');
           //const initials: string = "test";
           const initials: string = initialsArray[0].charAt(0) + initialsArray[initialsArray.length - 1].charAt(0);
-          const userPictureUrl = await this.getUserProfilePictureUrl(`i:0#.f|membership|${event.Author[0].email}`);
+          //const userPictureUrl = await this.getUserProfilePictureUrl(`i:0#.f|membership|${event.Requestor[0].email}`);
+          const fAllDayEvent: boolean =  (event.fAllDayEvent == "Yes") ? true : false;         
 
-         
-          const fAllDayEvent: boolean =  (event.fAllDayEvent == "Yes") ? true : false;
           const backupId: number = ( event.ParticipantsPicker[0] != null) ? event.ParticipantsPicker[0].id : null;    
-          const backupObj : any = (backupId != null) ? (await web.siteUsers.getById(backupId).get()).Title : null;                   
+          //const backupObj : any = (backupId != null) ? (await web.siteUsers.getById(backupId).get()).Title : null;   
+          const backupObj : any = (event.ParticipantsPicker[0] != null) ? event.ParticipantsPicker[0].title : null;
           const backupApproved: boolean =  (event.BackupApproved == "Yes") ? true : false;   
           const managerId: number = ( event.Manager[0] != null) ? event.Manager[0].id : null;    
-          const managerObj : any = (managerId != null) ? (await web.siteUsers.getById(managerId).get()).Title : null;                   
+          //const managerObj : any = (managerId != null) ? (await web.siteUsers.getById(managerId).get()).Title : null;      
+          const managerObj : any = event.Manager[0].title;
           const managerApproved: boolean =  (event.ManagerApproved == "Yes") ? true : false;
           const startDate =  new Date(moment(event.EventDate).toISOString());
           const endDate = new Date(moment(event.EndDate).toISOString());
           events.push({
             Status: event.Status,
             id: event.ID,
-            title: event.Author[0].title + " " + event.Category,
+            title: event.Requestor[0].title + " " + event.Category,
             Description: event.Description,
             start: startDate,
             end: endDate,
-            ownerEmail: event.Author[0].email,
-            ownerPhoto: userPictureUrl ?
-              `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${event.Author[0].email}&UA=0&size=HR96x96` : '',
+            ownerEmail: event.Requestor[0].email,
+            ownerPhoto: `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${event.Requestor[0].email}&UA=0&size=HR96x96`,
             ownerInitial: initials,
             //color: await this.colorGenerate(),
             color: await this.colorGenerateEvents(event),
-            ownerName: event.Author[0].title,
+            ownerName: event.Requestor[0].title,
             backup: backupId,      
             backupName: backupObj,
             backupApproved: backupApproved,      
@@ -490,6 +491,7 @@ export default class spservices {
       // Return Data
       return events;
     } catch (error) {
+      console.log(error)
       return Promise.reject(error);
     }
   }
@@ -525,6 +527,134 @@ export default class spservices {
     return fieldOptions;
   }
 
+  // /**
+  //  *
+  //  * @param {string} siteUrl
+  //  * @param {string} listId
+  //  * @param {Date} eventStartDate
+  //  * @param {Date} eventEndDate
+  //  * @returns {Promise< IEventData[]>}
+  //  * @memberof spservices
+  //  */
+  // public async getEvents2(siteUrl: string, listId: string, eventStartDate: Date, eventEndDate: Date, allowPending: boolean): Promise<IEventData[]> {
+  //     let events: IEventData[] = [];
+  //     let results;
+  //     if (!siteUrl) {
+  //       return [];
+  //     }
+  //     try {
+  //       const web = new Web(siteUrl);
+  //         // Get Regional Settings TimeZone Hours to UTC
+  //       const siteTimeZoneHoursToUTC: number = await this.getSiteTimeZoneHoursToUtc(siteUrl);
+  //       // Get Category Field Choices
+  //       const categoryDropdownOption = await this.getChoiceFieldOptions(siteUrl, listId, 'Category');
+  //       let categoryColor: { category: string, color: string }[] = [];
+  //       for (const cat of categoryDropdownOption) {
+  //       categoryColor.push({ category: cat.text, color: await this.colorGenerate() });
+  //       }
+  //       var spRequest = new XMLHttpRequest(); 
+  //       //spRequest.open('GET', "/sites/ITD/ApplicationsDiv/_api/web/lists/getbytitle('OoO Request List')/items",false); 
+  //     //   spRequest.setRequestHeader("Accept","application/json");                          
+  //     //   spRequest.onreadystatechange = function(){             
+  //     //     if (spRequest.readyState === 4 && spRequest.status === 200){ 
+  //     //       results = JSON.parse(spRequest.responseText); 
+  //     //       console.log(results.Row); 
+  //     //     } 
+  //     //     else if (spRequest.readyState === 4 && spRequest.status !== 200){ 
+  //     //         console.log('Error Occurred !'); 
+  //     //     } 
+  //     // }; 
+  //     // spRequest.send();
+
+  //   const restAPI = `${siteUrl}/_api/web/Lists(guid'${listId}')/RenderListDataAsStream`;
+  //   this.context.spHttpClient.post(restAPI, SPHttpClient.configurations.v1 , {
+  //     body: JSON.stringify({
+  //       parameters: {
+  //         RenderOptions: 2,
+  //         DatesInUtc: true,
+  //         ViewXml: `<View><ViewFields><FieldRef Name='Status'/><FieldRef Name='Requestor'/><FieldRef Name='Author'/><FieldRef Name='Manager'/><FieldRef Name='ManagerApproved'/><FieldRef Name='BackupApproved'/><FieldRef Name='Category'/><FieldRef Name='Description'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ID'/><FieldRef Name='EndDate'/><FieldRef Name='EventDate'/><FieldRef Name='ID'/><FieldRef Name='Title'/><FieldRef Name='fAllDayEvent'/></ViewFields>
+  //         <Query>
+  //         <Where>
+  //           <And>
+  //            <And>
+  //             <Geq>
+  //               <FieldRef Name='EventDate' />
+  //               <Value IncludeTimeValue='false' Type='DateTime'>${moment(eventStartDate).format('YYYY-MM-DD')}</Value>
+  //             </Geq>
+  //             <Leq>
+  //               <FieldRef Name='EventDate' />
+  //               <Value IncludeTimeValue='false' Type='DateTime'>${moment(eventEndDate).format('YYYY-MM-DD')}</Value>
+  //             </Leq>
+  //             </And>
+  //             <Eq>
+  //             <FieldRef Name='fRecurrence' />
+  //               <Value Type='Recurrence'>0</Value>
+  //             </Eq>
+  //           </And>
+  //         </Where>
+  //         </Query>
+  //         <RowLimit Paged=\"FALSE\">2000</RowLimit>
+  //         </View>`
+  //       }
+  //     })
+  //   })
+  //   .then((data: SPHttpClientResponse) => data.json())
+  //   .then(async (data: any) => {
+  //     if (data && data.Row.length > 0) {
+  //       for (const event of data.Row) {
+  //         console.log(event);
+  //         const initialsArray: string[] = event.Requestor[0].title.split(' ');
+  //         //const initials: string = "test";
+  //         const initials: string = initialsArray[0].charAt(0) + initialsArray[initialsArray.length - 1].charAt(0);
+  //         const userPictureUrl = await this.getUserProfilePictureUrl(`i:0#.f|membership|${event.Requestor[0].email}`);
+  
+         
+  //         const fAllDayEvent: boolean =  (event.fAllDayEvent == "Yes") ? true : false;         
+  //         const CategoryColorValue: any[] = categoryColor.filter((value) => {
+  //           return value.category == event.Category;
+  //         });
+  
+  //         const backupId: number = ( event.ParticipantsPicker[0] != null) ? event.ParticipantsPicker[0].id : null;    
+  //         const backupObj : any = (backupId != null) ? (await web.siteUsers.getById(backupId).get()).Title : null;                   
+  //         const backupApproved: boolean =  (event.BackupApproved == "Yes") ? true : false;   
+  //         const managerId: number = ( event.Manager[0] != null) ? event.Manager[0].id : null;    
+  //         const managerObj : any = (managerId != null) ? (await web.siteUsers.getById(managerId).get()).Title : null;                   
+  //         const managerApproved: boolean =  (event.ManagerApproved == "Yes") ? true : false;       
+  
+  //         const startDate =  new Date(moment(event.EventDate).toISOString());
+  //         const endDate = new Date(moment(event.EndDate).toISOString());
+  //         if ((allowPending || (!allowPending && managerApproved)) && event.Status !== "Cancelled" && event.Status !== "Rejected" )
+  //         events.push({
+  //           id: event.ID,
+  //           title: event.Requestor[0].title + " " + event.Category,
+  //           Description: event.Description,
+  //           start: startDate,
+  //           end: endDate,
+  //           ownerEmail: event.Requestor[0].email,
+  //           ownerPhoto: userPictureUrl ?
+  //             `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${event.Requestor[0].email}&UA=0&size=HR96x96` : '',
+  //           ownerInitial: initials,
+  //           //color: await this.colorGenerate(),
+  //           color: await this.colorGenerateEvents(event),
+  //           ownerName: event.Requestor[0].title,
+  //           backup: backupId,      
+  //           backupName: backupObj,
+  //           backupApproved: backupApproved,      
+  //           manager : managerId,       
+  //           managerName: managerObj,
+  //           managerApproved: managerApproved,   
+  //           allDayEvent: fAllDayEvent,
+  //           Category: event.Category
+  //         });
+  //       }
+  //     }
+  //     console.log(events);
+  //       return events;
+  //   });
+  //   } catch (error) {
+  //     return Promise.reject(error);
+  //   }
+  // }
   /**
    *
    * @param {string} siteUrl
@@ -554,7 +684,7 @@ export default class spservices {
       const results = await web.lists.getById(listId).renderListDataAsStream(
         {
           DatesInUtc: true,
-          ViewXml: `<View><ViewFields><FieldRef Name='Status'/><FieldRef Name='Author'/><FieldRef Name='Manager'/><FieldRef Name='ManagerApproved'/><FieldRef Name='BackupApproved'/><FieldRef Name='Category'/><FieldRef Name='Description'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ID'/><FieldRef Name='EndDate'/><FieldRef Name='EventDate'/><FieldRef Name='ID'/><FieldRef Name='Title'/><FieldRef Name='fAllDayEvent'/></ViewFields>
+          ViewXml: `<View><ViewFields><FieldRef Name='Status'/><FieldRef Name='Requestor'/><FieldRef Name='Author'/><FieldRef Name='Manager'/><FieldRef Name='ManagerApproved'/><FieldRef Name='BackupApproved'/><FieldRef Name='Category'/><FieldRef Name='Description'/><FieldRef Name='ParticipantsPicker'/><FieldRef Name='ID'/><FieldRef Name='EndDate'/><FieldRef Name='EventDate'/><FieldRef Name='ID'/><FieldRef Name='Title'/><FieldRef Name='fAllDayEvent'/></ViewFields>
           <Query>
           <Where>
             <And>
@@ -581,40 +711,40 @@ export default class spservices {
       );
       if (results && results.Row.length > 0) {
         for (const event of results.Row) {
-          const initialsArray: string[] = event.Author[0].title.split(' ');
+          const initialsArray: string[] = event.Requestor[0].title.split(' ');
           //const initials: string = "test";
           const initials: string = initialsArray[0].charAt(0) + initialsArray[initialsArray.length - 1].charAt(0);
-          const userPictureUrl = await this.getUserProfilePictureUrl(`i:0#.f|membership|${event.Author[0].email}`);
-
-         
+          //const userPictureUrl = await this.getUserProfilePictureUrl(`i:0#.f|membership|${event.Requestor[0].email}`);
           const fAllDayEvent: boolean =  (event.fAllDayEvent == "Yes") ? true : false;         
           const CategoryColorValue: any[] = categoryColor.filter((value) => {
             return value.category == event.Category;
           });
 
           const backupId: number = ( event.ParticipantsPicker[0] != null) ? event.ParticipantsPicker[0].id : null;    
-          const backupObj : any = (backupId != null) ? (await web.siteUsers.getById(backupId).get()).Title : null;                   
+          //const backupObj : any = (backupId != null) ? (await web.siteUsers.getById(backupId).get()).Title : null;    
+          const backupObj : any = (event.ParticipantsPicker[0] != null) ? event.ParticipantsPicker[0].title : null;
           const backupApproved: boolean =  (event.BackupApproved == "Yes") ? true : false;   
           const managerId: number = ( event.Manager[0] != null) ? event.Manager[0].id : null;    
-          const managerObj : any = (managerId != null) ? (await web.siteUsers.getById(managerId).get()).Title : null;                   
+          //const managerObj : any = (managerId != null) ? (await web.siteUsers.getById(managerId).get()).Title : null;      
+          const managerObj : any = event.Manager[0].title;
           const managerApproved: boolean =  (event.ManagerApproved == "Yes") ? true : false;       
-
+          const img = new Image();
+          img.src = `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${event.Requestor[0].email}&UA=0&size=HR96x96`;
           const startDate =  new Date(moment(event.EventDate).toISOString());
           const endDate = new Date(moment(event.EndDate).toISOString());
           if ((allowPending || (!allowPending && managerApproved)) && event.Status !== "Cancelled" && event.Status !== "Rejected" )
           events.push({
             id: event.ID,
-            title: event.Author[0].title + " " + event.Category,
+            title: event.Requestor[0].title + " " + event.Category,
             Description: event.Description,
             start: startDate,
             end: endDate,
-            ownerEmail: event.Author[0].email,
-            ownerPhoto: userPictureUrl ?
-              `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${event.Author[0].email}&UA=0&size=HR96x96` : '',
+            ownerEmail: event.Requestor[0].email,
+            ownerPhoto:img.width !== 1? `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${event.Requestor[0].email}&UA=0&size=HR96x96` : "",
             ownerInitial: initials,
             //color: await this.colorGenerate(),
             color: await this.colorGenerateEvents(event),
-            ownerName: event.Author[0].title,
+            ownerName: event.Requestor[0].title,
             backup: backupId,      
             backupName: backupObj,
             backupApproved: backupApproved,      
@@ -629,6 +759,7 @@ export default class spservices {
       // Return Data
       return events;
     } catch (error) {
+      console.log(error)
       return Promise.reject(error);
     }
   }

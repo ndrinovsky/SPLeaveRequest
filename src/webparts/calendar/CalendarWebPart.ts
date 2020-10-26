@@ -1,8 +1,12 @@
+
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
+import "@pnp/polyfill-ie11";
+import 'raf/polyfill';
+
 import { Version } from '@microsoft/sp-core-library';
 
-import { BaseClientSideWebPart, PropertyPaneHorizontalRule } from '@microsoft/sp-webpart-base';
+import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import {
   IPropertyPaneConfiguration,
   PropertyPaneTextField,
@@ -45,7 +49,6 @@ export default class CalendarWebPart extends BaseClientSideWebPart<ICalendarWebP
   }
 
   public render(): void {
-
     const element: React.ReactElement<ICalendarProps> = React.createElement(
       Calendar,
       {
@@ -95,9 +98,9 @@ export default class CalendarWebPart extends BaseClientSideWebPart<ICalendarWebP
     ReactDom.unmountComponentAtNode(this.domElement);
   }
 
-  protected get dataVersion(): Version {
-    return Version.parse('1.0');
-  }
+  // protected get dataVersion(): Version {
+  //   return Version.parse('1.0');
+  // }
 
   /**
    *

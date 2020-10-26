@@ -11,4 +11,5 @@ export interface ICalendarState {
   isloading: boolean;
   hasError: boolean;
   errorMessage: string;
+  expand: boolean;
 }

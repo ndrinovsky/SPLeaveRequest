@@ -49,7 +49,7 @@ import {
 }
   from 'office-ui-fabric-react';
 import { addMonths, addYears } from 'office-ui-fabric-react/lib/utilities/dateMath/DateMath';
-import { _ComponentBaseKillSwitches } from '@microsoft/sp-component-base';
+// import { _ComponentBaseKillSwitches } from '@microsoft/sp-component-base';
 import { EditorState, convertToRaw, ContentState } from 'draft-js';
 import draftToHtml from 'draftjs-to-html';
 import htmlToDraft from 'html-to-draftjs';
