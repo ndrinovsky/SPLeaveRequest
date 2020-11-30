@@ -326,7 +326,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
    * @memberof Event
    */
   private onStartChangeHour = (ev: React.FormEvent<HTMLDivElement>, item: IDropdownOption): void => {
-    ev.preventDefault;
+    // ev.preventDefault;
     this.setState({ startSelectedHour: item });   
   }
 
@@ -335,7 +335,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
    * @memberof Event
    */
   private onEndChangeHour = (ev: React.FormEvent<HTMLDivElement>, item: IDropdownOption): void => {
-    ev.preventDefault;
+    // ev.preventDefault;
     this.setState({ endSelectedHour: item });      
   }
 
@@ -344,7 +344,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
    * @memberof Event
    */
   private onStartChangeMin = (ev: React.FormEvent<HTMLDivElement>, item: IDropdownOption): void => {
-    ev.preventDefault;
+    // ev.preventDefault;
     this.setState({ startSelectedMin: item });     
   }
 
@@ -375,7 +375,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
    * @param {*} editorState
    * @memberof Event
    */
-  private onEditorStateChange(editorState) {
+  private onEditorStateChange(editorState: any) {
     this.setState({
       editorState,
     });        
@@ -387,7 +387,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
    * @memberof Event
    */
   private onEndChangeMin(ev: React.FormEvent<HTMLDivElement>, item: IDropdownOption): void {
-    ev.preventDefault;
+    // ev.preventDefault;
     this.setState({ endSelectedMin: item });       
   }
 
@@ -400,7 +400,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
    * @memberof Event
    */
   private onCategoryChanged(ev: React.FormEvent<HTMLDivElement>, item: IDropdownOption): void {
-    ev.preventDefault;
+    // ev.preventDefault;
     this.setState({ eventData: { ...this.state.eventData, Category: item.text } }); 
   }
 
@@ -411,7 +411,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
    * @memberof Event
    */
   private onDelete(ev: React.MouseEvent<HTMLDivElement>) {
-    ev.preventDefault;
+    // ev.preventDefault;
     this.setState({ displayDialog: true });
   }
 
@@ -422,7 +422,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
    * @memberof Event
    */
   private closeDialog(ev: React.MouseEvent<HTMLDivElement>) {
-    ev.preventDefault;
+    // ev.preventDefault;
     this.setState({ displayDialog: false });
   }
 
@@ -452,7 +452,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
   }*/
 
   private async confirmDelete(ev: React.MouseEvent<HTMLDivElement>) {
-    ev.preventDefault;
+    // ev.preventDefault;
     try {
       this.setState({ isDeleting: true });
 
@@ -540,7 +540,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
   // }
 
   private onAllDayEventChange(ev: React.MouseEvent<HTMLElement>, checked: boolean) {
-    ev.preventDefault;
+    // ev.preventDefault;
     
     if (checked){
 

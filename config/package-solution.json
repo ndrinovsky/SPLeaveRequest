@@ -3,7 +3,7 @@
   "solution": {
     "name": "Leave Request Calendar",
     "id": "3a13208b-3874-4036-9262-4edd22e88187",
-    "version": "1.2.4.0",
+    "version": "1.2.8.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
@@ -12,7 +12,7 @@
         "title": "asset-deployment-webpart-client-side-solution",
         "description": "asset-deployment-webpart-client-side-solution",
         "id": "7d486ba7-a7d4-4cdf-82c3-0f892f6c594a",
-        "version": "1.2.3.0",
+        "version": "1.2.8.0",
         "assets": {
           "elementManifests": [
             "elements.xml"

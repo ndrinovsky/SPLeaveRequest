@@ -2,6 +2,7 @@
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
 import "@pnp/polyfill-ie11";
+import 'core-js/features/array/find';
 import 'raf/polyfill';
 
 import { Version } from '@microsoft/sp-core-library';

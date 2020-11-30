@@ -224,7 +224,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
       return <DetailsRow {...props} styles={customStyles} />;
     }
     return null;
-  };
+  }
 
   private _onColumnClick = (ev: React.MouseEvent<HTMLElement>, column: IColumn): void => {
     const { columns, filteredData } = this.state;
@@ -244,7 +244,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
       columns: newColumns,
       filteredData: newItems,
     });
-  };
+  }
   /**
    *  Hide Panel
    *
@@ -274,14 +274,19 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
       // Teste Properties
       if (!this.props.list || !this.props.siteUrl || !this.props.eventStartDate.value || !this.props.eventEndDate.value) return;
 
-      const eventsData: IEventData[] = await this.spService.getUserEvents(escape(this.props.siteUrl), escape(this.props.list), this.props.eventStartDate.value, this.props.eventEndDate.value);
+      const eventsData: IEventData[] = await this.spService.getUserEvents(escape(this.props.siteUrl), escape(this.props.list));
 
       for (const event of eventsData){ 
+        let startOffset = (event.start.getTimezoneOffset());
+        let endOffset = (event.end.getTimezoneOffset());
         //correct issue with items listed as all day events
         if (event.allDayEvent){
         event.end.setTime(event.end.getTime() + (7*60*60*1000)); 
         event.start.setTime(event.start.getTime() + (7*60*60*1000)); 
         }
+        //offset for DST
+        event.end.setHours(event.end.getHours() + ((endOffset - 420)/60));
+        event.start.setHours(event.start.getHours() + ((startOffset - 420)/60));
       }
       this.setState({ allEventData: eventsData, filteredData: eventsData, hasError: false, errorMessage: "" });
     } catch (error) {
@@ -300,7 +305,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
       this.state.allEventData.filter(i => ((i.Status === "Accepted" && this.state.acceptedFilter) || (i.Status === "Rejected" && this.state.rejectedFilter) || 
       (i.Status === "Pending" && this.state.pendingFilter) || (i.Status === "Cancelled" && this.state.cancelledFilter))),
     });
-  };
+  }
     /**
    *
    *
@@ -311,7 +316,7 @@ export class RequestList extends React.Component<IRequestListProps, IRequestList
     
     const newState = { [element.name]: !this.state[element.name as keyof IRequestListState] } as any;
     this.setState(newState);
-  };
+  }
 
   /**
    *
@@ -389,7 +394,7 @@ public componentDidUpdate(prevProps, prevState){
           onRenderFooterContent={this.onRenderFooterContent}
         >
         <div className={styles.right}>
-          <a href='https://gov.flow.microsoft.us/manage/environments/Default-ca71c0aa-a028-43ec-8c30-056b60ed7414/approvals/received' target='_blank'>Click here to accept your pending requests</a>
+          <a href='https://gov.flow.microsoft.us/manage/environments/Default-ca71c0aa-a028-43ec-8c30-056b60ed7414/approvals/received' target='_blank'>Click here to accept your pending requests.</a>
         </div>
           <div style={{ width: '100%' }}>
             {

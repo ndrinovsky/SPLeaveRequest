@@ -62,7 +62,8 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
       hasError: false,
       errorMessage: '',
       showRequests: false,
-      expand: false
+      expand: false,
+      maxDayLen: 0
     };
 
     this.onDismissPanel = this.onDismissPanel.bind(this);
@@ -134,7 +135,9 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
 
       this.userListPermissions = await this.spService.getUserPermissions(this.props.siteUrl, this.props.list);
       const eventsData: IEventData[] = await this.spService.getEvents(escape(this.props.siteUrl), escape(this.props.list), this.props.eventStartDate.value, this.props.eventEndDate.value, this.props.allowPending);
-      
+      var  max = 0;
+      var dayLen = 1;
+      var compDate = null;
       for (const event of eventsData){ 
         let startOffset = (event.start.getTimezoneOffset());
         let endOffset = (event.end.getTimezoneOffset());
@@ -146,8 +149,18 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
         //offset for DST
         event.end.setHours(event.end.getHours() + ((endOffset - 420)/60));
         event.start.setHours(event.start.getHours() + ((startOffset - 420)/60));
+        if (compDate != null && new Date(compDate[0]) <= new Date(event.start.toLocaleDateString('en-US')) && new Date(compDate[1]) >= new Date(event.start.toLocaleDateString('en-US'))){
+          dayLen++;
+        }
+        else{
+          compDate = [event.start.toLocaleDateString('en-US'), event.end.toLocaleDateString('en-US')];
+          dayLen = 0;
+        }
+        if (dayLen > max){
+          max = dayLen;
+        }
       }
-      this.setState({ eventData: eventsData, hasError: false, errorMessage: "" });
+      this.setState({ eventData: eventsData, maxDayLen: max, hasError: false, errorMessage: "" });
 
     } catch (error) {
       this.setState({ hasError: true, errorMessage: error.message, isloading: false });
@@ -324,7 +337,7 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
    * @memberof Calendar
    */
   public render(): React.ReactElement<ICalendarProps> {
-
+    var exapnded = { "--size": (this.state.maxDayLen *140) + "px" } as React.CSSProperties;
     return (
       <div className={styles.calendar}>
         <WebPartTitle displayMode={this.props.displayMode}
@@ -351,10 +364,10 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
                 {this.state.isloading ? <Spinner size={SpinnerSize.large} label={strings.LoadingEventsLabel} /> :
                 (!this.state.expand ?
                   <>
-                  <div className={styles['button-gutter']} >
-                  <DefaultButton className={styles['expand-button']} type="button" onClick={() => this.expand()}> {this.state.expand ? "Collapse Events": "Expand Events"}</DefaultButton>
+                  <div className={styles['buttonGutter']} >
+                  <DefaultButton className={styles['expandButton']} type="button" onClick={() => this.expand()}> {this.state.expand ? "Collapse Events": "Expand Events"}</DefaultButton>
                   </div>
-                  <div className={styles.container}>
+                  <div className={styles.container} >
                     <BigCalendar
                       localizer={localizer}
                       selectable
@@ -389,10 +402,10 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
                     <DefaultButton type="button" onClick={() => this.onShowRequests()}>View My Requests</DefaultButton>
                   </div>
                   </> : <>
-                  <div className={styles['button-gutter']} >
-                  <DefaultButton className={styles['expand-button']} type="button" onClick={() => this.expand()}> {this.state.expand ? "Collapse Events": "Expand Events"}</DefaultButton>
+                  <div className={styles['buttonGutter']} >
+                  <DefaultButton className={styles['expandButton']} type="button" onClick={() => this.expand()}> {this.state.expand ? "Collapse Events": "Expand Events"}</DefaultButton>
                   </div>
-                  <div className={styles["container-expanded"]}>
+                  <div className={styles["containerExpanded"]} style={exapnded}>
                     <BigCalendar
                       localizer={localizer}
                       selectable

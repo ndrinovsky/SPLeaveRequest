@@ -82,6 +82,8 @@
     font-family: "Segoe UI WestEuropean","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",sans-serif;
 }
 .calendar {
+  
+  background-color: #ffffff;
   .container {
     max-width: 100%;
     min-height: 400px;
@@ -89,14 +91,15 @@
     margin: 0px auto;
 
   }
-  .container-expanded {
+  .containerExpanded {
     max-width: 100%;
     min-height: 400px;
-    height: 1200px;
+    height: 1800px;
     margin: 0px auto;
+    height: var(--size);
   }
 
-  .button-gutter{
+  .buttonGutter{
     width: 100%;
     text-align: right;
   }

@@ -12,4 +12,5 @@ export interface ICalendarState {
   hasError: boolean;
   errorMessage: string;
   expand: boolean;
+  maxDayLen: number;
 }
