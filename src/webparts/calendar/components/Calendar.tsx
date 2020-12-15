@@ -154,12 +154,13 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
         }
         else{
           compDate = [event.start.toLocaleDateString('en-US'), event.end.toLocaleDateString('en-US')];
-          dayLen = 0;
+          dayLen = 1;
         }
         if (dayLen > max){
           max = dayLen;
         }
       }
+      console.log(max);
       this.setState({ eventData: eventsData, maxDayLen: max, hasError: false, errorMessage: "" });
 
     } catch (error) {
@@ -337,7 +338,7 @@ export default class Calendar extends React.Component<ICalendarProps, ICalendarS
    * @memberof Calendar
    */
   public render(): React.ReactElement<ICalendarProps> {
-    var exapnded = { "--size": (this.state.maxDayLen *140) + "px" } as React.CSSProperties;
+    var exapnded = { "--size": (this.state.maxDayLen *140) + 190 + "px" } as React.CSSProperties;
     return (
       <div className={styles.calendar}>
         <WebPartTitle displayMode={this.props.displayMode}

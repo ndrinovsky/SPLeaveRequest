@@ -116,12 +116,18 @@ export default class spservices {
     let results = null;
     try {
 
-      const siteTimeZoneHoursToUTC: number = await this.getSiteTimeZoneHoursToUtc(siteUrl);
-
       const web = new Web(siteUrl);
 
+      const siteTimeZoneHoursToUTC: number = await this.getSiteTimeZoneHoursToUtc(siteUrl);
+      //"Title","fRecurrence", "fAllDayEvent","EventDate", "EndDate", "Description","ID",
+      //"Backup"
       const startDate = new Date(moment(updateEvent.start).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
       const endDate = new Date(moment(updateEvent.end).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
+
+      if(updateEvent.allDayEvent){
+        startDate.setTime(startDate.getTime() + (1*60*60*1000));
+        endDate.setTime(endDate.getTime() + (1*60*60*1000));        
+      }
       let requestor = await web.siteUsers.getByEmail(this.context.pageContext.user.loginName).get();
       //"Title","fRecurrence", "fAllDayEvent","EventDate", "EndDate", "Description","ID", "Location","ParticipantsPickerId"
       results = await web.lists.getById(listId).items.getById(updateEvent.id).update({
