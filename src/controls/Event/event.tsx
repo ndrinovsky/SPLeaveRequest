@@ -764,7 +764,7 @@ export class Event extends React.Component<IEventProps, IEventState> {
                     webAbsoluteUrl={this.props.siteUrl}
                     context={this.props.context}
                     titleText={strings.BackupLabel}
-                    principalTypes={[PrincipalType.User]}
+                    principalTypes={[PrincipalType.User, PrincipalType.SecurityGroup, PrincipalType.SharePointGroup]}
                     resolveDelay={1000}
                     showtooltip={true}
                     selectedItems={this.getPeoplePickerItems}
