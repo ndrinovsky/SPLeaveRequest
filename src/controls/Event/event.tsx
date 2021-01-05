@@ -262,7 +262,11 @@ export class Event extends React.Component<IEventProps, IEventState> {
       if (backup && backup != null) {
           let user: any = await this.spService.getUserById(backup, this.props.siteUrl);
           if (user) {
-            selectedUsers.push(user.UserPrincipalName);
+            if(user.UserPrincipalName){
+              selectedUsers.push(user.UserPrincipalName);
+            } else{
+              selectedUsers.push(user.Email);
+            }
           
         }
       }
