@@ -85,7 +85,6 @@ export default class spservices {
       //"Backup"
       const startDate = new Date(moment(newEvent.start).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
       const endDate = new Date(moment(newEvent.end).add(siteTimeZoneHoursToUTC, 'hours').toISOString());
-      
       let requestor = await web.siteUsers.getByEmail(this.context.pageContext.user.loginName).get();
       results = await web.lists.getById(listId).items.add({
         Title:  requestor.Title + " - " + newEvent.Category,
@@ -100,6 +99,7 @@ export default class spservices {
         RequestorId: requestor.Id
       });
     } catch (error) {
+      console.log(error);
       return Promise.reject(error);
     }
     return results;
